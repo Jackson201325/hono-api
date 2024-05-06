@@ -14,6 +14,6 @@ app.route("/wishlists", wishlistsRoute);
 app.route("/categories", categoriesRoute);
 app.route("/", seedRoute);
 
-showRoutes(app);
+// showRoutes(app);
 
 export default app;

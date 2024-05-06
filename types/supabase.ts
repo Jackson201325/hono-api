@@ -116,7 +116,6 @@ export type Database = {
       }
       events: {
         Row: {
-          city: string | null
           country: string | null
           created_at: string | null
           date: string | null
@@ -130,7 +129,6 @@ export type Database = {
           url: string | null
         }
         Insert: {
-          city?: string | null
           country?: string | null
           created_at?: string | null
           date?: string | null
@@ -144,7 +142,6 @@ export type Database = {
           url?: string | null
         }
         Update: {
-          city?: string | null
           country?: string | null
           created_at?: string | null
           date?: string | null
@@ -176,30 +173,36 @@ export type Database = {
       }
       giftlists: {
         Row: {
+          category_id: string | null
           created_at: string | null
           description: string | null
-          event_id: string
+          event_id: string | null
           id: string
+          is_default: boolean | null
           name: string
           total_gifts: string | null
           total_price: string | null
           updated_at: string | null
         }
         Insert: {
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
-          event_id: string
+          event_id?: string | null
           id?: string
+          is_default?: boolean | null
           name: string
           total_gifts?: string | null
           total_price?: string | null
           updated_at?: string | null
         }
         Update: {
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
-          event_id?: string
+          event_id?: string | null
           id?: string
+          is_default?: boolean | null
           name?: string
           total_gifts?: string | null
           total_price?: string | null
@@ -207,11 +210,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "giftlists_event_id_fkey"
-            columns: ["event_id"]
+            foreignKeyName: "giftlists_category_id_fkey"
+            columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "event_gifts"
-            referencedColumns: ["event_id"]
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "giftlists_event_id_fkey"
@@ -275,13 +278,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gifts_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "event_gifts"
-            referencedColumns: ["event_id"]
           },
           {
             foreignKeyName: "gifts_event_id_fkey"
@@ -500,29 +496,8 @@ export type Database = {
             foreignKeyName: "wishlist_gifts_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "event_gifts"
-            referencedColumns: ["event_id"]
-          },
-          {
-            foreignKeyName: "wishlist_gifts_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "wishlist_gifts_gift_id_fkey"
-            columns: ["gift_id"]
-            isOneToOne: false
-            referencedRelation: "event_gifts"
-            referencedColumns: ["gift_id"]
-          },
-          {
-            foreignKeyName: "wishlist_gifts_gift_id_fkey"
-            columns: ["gift_id"]
-            isOneToOne: false
-            referencedRelation: "event_gifts"
-            referencedColumns: ["original_gift_id"]
           },
           {
             foreignKeyName: "wishlist_gifts_gift_id_fkey"
@@ -543,39 +518,32 @@ export type Database = {
       wishlists: {
         Row: {
           created_at: string | null
+          description: string | null
           event_id: string
           id: string
-          location: string | null
           total_gifts: string | null
           total_price: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           event_id: string
           id?: string
-          location?: string | null
           total_gifts?: string | null
           total_price?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           event_id?: string
           id?: string
-          location?: string | null
           total_gifts?: string | null
           total_price?: string | null
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "wishlists_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "event_gifts"
-            referencedColumns: ["event_id"]
-          },
           {
             foreignKeyName: "wishlists_event_id_fkey"
             columns: ["event_id"]
@@ -589,32 +557,19 @@ export type Database = {
     Views: {
       event_gifts: {
         Row: {
+          category_id: string | null
+          description: string | null
           event_id: string | null
-          gift_description: string | null
-          gift_id: string | null
-          gift_name: string | null
-          original_gift_description: string | null
-          original_gift_id: string | null
-          original_gift_name: string | null
-          primary_user_id: string | null
-          secondary_user_id: string | null
+          giftlist_id: string | null
+          id: string | null
+          image_url: string | null
+          is_default: boolean | null
+          name: string | null
+          price: string | null
+          source_gift_id: string | null
+          wishlist_id: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "events_primary_user_id_fkey"
-            columns: ["primary_user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_secondary_user_id_fkey"
-            columns: ["secondary_user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {

@@ -1,34 +1,17 @@
-CREATE MATERIALIZED VIEW event_gifts AS
+CREATE VIEW event_gifts AS
 SELECT
-  g.id AS gift_id,
-  g.name AS gift_name,
-  g.description AS gift_description,
-  og.id AS original_gift_id,
-  og.name AS original_gift_name,
-  og.description AS original_gift_description,
-  e.id AS event_id,
-  e.primary_user_id,
-  e.secondary_user_id
+  COALESCE(g.id, og.id) AS id,
+  COALESCE(g.name, og.name) AS name,
+  COALESCE(g.description, og.description) AS description,
+  COALESCE(g.price, og.price) AS price,
+  COALESCE(g.image_url, og.image_url) AS image_url,
+  COALESCE(g.is_default, og.is_default) AS is_default,
+  COALESCE(g.category_id, og.category_id) AS category_id,
+  COALESCE(g.event_id, og.event_id) AS event_id,
+  COALESCE(g.giftlist_id, og.giftlist_id) AS giftlist_id,
+  COALESCE(g.source_gift_id, og.source_gift_id) AS source_gift_id,
+  COALESCE(g.wishlist_id, og.wishlist_id) AS wishlist_id
 FROM
   gifts g
   LEFT JOIN gifts og ON g.source_gift_id = og.id
   JOIN events e ON g.event_id = e.id;
-
-create
-or replace function refresh_event_gifts_view_on_specific_gifts () returns trigger as $$
-BEGIN
-  IF NEW.is_default = false THEN
-    REFRESH MATERIALIZED VIEW event_gifts;
-  END IF;
-  RETURN NULL;
-END;
-$$ language plpgsql;
-
-CREATE TRIGGER refresh_event_gifts_on_insert_on_specific_gifts
-AFTER INSERT ON gifts FOR EACH ROW
-EXECUTE FUNCTION refresh_event_gifts_view_on_specific_gifts ();
-
-CREATE TRIGGER refresh_event_gifts_on_update_on_specific_gifts
-AFTER
-UPDATE ON gifts FOR EACH ROW
-EXECUTE FUNCTION refresh_event_gifts_view_on_specific_gifts ();

@@ -88,7 +88,8 @@ export const GiftlistSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(255),
   description: z.string().min(1).optional(),
-  price: z.string().default("0"),
+  total_gifts: z.string().default("0"),
+  total_price: z.string().default("0"),
   is_default: z.boolean().default(false).optional(),
   category_id: z.string().optional(),
   event_id: z.string().uuid(),
@@ -137,6 +138,8 @@ export const PaginationQueryParamsSchema = z.object({
 export const GiftsQueryParamsSchema = PaginationQueryParamsSchema.extend({
   is_default: z.boolean().default(true).optional(),
   giftlist_id: z.string().optional(),
+  wishlist_id: z.string().uuid(),
+  event_id: z.string().uuid(),
   category_id: z.string().optional(),
   name: z.string().min(1).max(255).optional(),
 });

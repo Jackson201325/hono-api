@@ -15,6 +15,9 @@ import {
 const seedRoute = new Hono();
 
 seedRoute.get("/seed", async (c) => {
+  const { categories, gifts, users, events, wishlists, giftlists } =
+    generateSeedData();
+
   // Insert users into the database
   const insertUsers = await supabase.from("users").insert(users).select();
 
@@ -33,24 +36,21 @@ seedRoute.get("/seed", async (c) => {
     .insert(categories)
     .select();
 
-  // Insert gifts into the database
-  const insertGifts = await supabase.from("gifts").insert(gifts).select();
-
-  // Insert giftlists into the database
   const insertGiftlists = await supabase
     .from("giftlists")
     .insert(giftlists)
     .select();
 
+  // Insert gifts into the database
+  const insertGifts = await supabase.from("gifts").insert(gifts).select();
+
   return c.json({
-    success: true,
-    message: "Seed data inserted successfully.",
     insertUsers,
     insertEvents,
     insertWishlists,
     insertCategories,
-    insertGifts,
     insertGiftlists,
+    insertGifts,
   });
 });
 
@@ -72,7 +72,7 @@ const generateSeedData = () => {
       last_name: faker.person.lastName(),
       email: faker.internet.email(),
       password: faker.internet.password(),
-      email_verified: faker.date.past(),
+      // email_verified: faker.date.past().toString(),
       image: faker.image.url(),
       role: UserType.COUPLE,
       is_onboarded: faker.datatype.boolean(),
@@ -83,102 +83,102 @@ const generateSeedData = () => {
 
     if (user.success) {
       users.push(user.data);
-      // Generate and insert categories
+    }
+  }
 
-      const event = EventSchema.safeParse({
+  const event = EventSchema.safeParse({
+    id: simpleFaker.string.uuid(),
+    name: faker.word.words({ count: { min: 5, max: 10 } }),
+    // date: faker.date.future().toString(),
+    location: faker.location.city(),
+    url: faker.internet.url(),
+    country: faker.location.country(),
+    primary_user_id: users[0].id,
+    secondary_user_id: users[1].id,
+  });
+
+  if (event.success) {
+    events.push(event.data);
+
+    for (const _ of Array.from({ length: 5 })) {
+      const validatedCategory = CategorySchema.safeParse({
         id: simpleFaker.string.uuid(),
-        name: faker.word.words({ count: { min: 5, max: 10 } }),
-        date: faker.date.future(),
-        location: faker.location.city(),
-        url: faker.internet.url(),
-        country: faker.location.country(),
+        name: faker.commerce.department(),
       });
 
-      if (event.success) {
-        events.push(event.data);
+      if (validatedCategory.success) {
+        categories.push(validatedCategory.data);
 
-        const giftlist = GiftlistSchema.safeParse({
-          id: simpleFaker.string.uuid(),
-          name: faker.commerce.product(),
-          description: faker.commerce.productDescription(),
-          total_price: "0",
-          is_default: faker.datatype.boolean(),
-          category_id: simpleFaker.string.uuid(),
-          event_id: event.data.id,
-        });
+        for (const _ of Array.from({ length: 5 })) {
+          const validatedGiftlist = GiftlistSchema.safeParse({
+            id: simpleFaker.string.uuid(),
+            name: faker.commerce.product(),
+            description: faker.commerce.productDescription(),
+            total_price: "0",
+            is_default: faker.datatype.boolean(),
+            category_id: validatedCategory.data.id,
+            event_id: event.data.id,
+          });
 
-        if (giftlist.success) {
-          giftlists.push(giftlist.data);
+          if (validatedGiftlist.success) {
+            giftlists.push(validatedGiftlist.data);
 
-          for (const _ of Array.from({ length: 5 })) {
-            const validatedCategory = CategorySchema.safeParse({
-              id: simpleFaker.string.uuid(),
-              name: faker.commerce.department(),
-            });
+            for (const _ of Array.from({ length: 15 })) {
+              const gift = {
+                id: simpleFaker.string.uuid(),
+                name: faker.commerce.productName(),
+                description: faker.commerce.productDescription(),
+                price: faker.commerce.price(),
+                is_default: true,
+                image_url: faker.image.url(),
+                category_id: validatedCategory.data.id,
+                event_id: event.data.id, // Add event_id for each gift
+                giftlist_id: validatedGiftlist.data.id,
+              };
 
-            if (validatedCategory.success) {
-              categories.push(validatedCategory.data);
+              const validatedGift = GiftSchema.safeParse(gift);
 
-              // Generate and insert predefined gifts for each category
-              for (const _ of Array.from({ length: 15 })) {
-                const gift = {
-                  id: simpleFaker.string.uuid(),
-                  name: faker.commerce.productName(),
-                  description: faker.commerce.productDescription(),
-                  price: faker.commerce.price(),
-                  is_default: true,
-                  image_url: faker.image.url(),
-                  category_id: validatedCategory.data.id,
-                  event_id: event.data.id, // Add event_id for each gift
-                  giftlist_id: giftlist.data.id,
-                };
-
-                const validatedGift = GiftSchema.safeParse(gift);
-                if (validatedGift.success) {
-                  gifts.push(validatedGift.data);
-                }
+              if (validatedGift.success) {
+                gifts.push(validatedGift.data);
               }
             }
           }
-
-          // Generate and insert newly created gifts
-          for (const _ of Array.from({ length: 10 })) {
-            const category = faker.helpers.arrayElement(categories);
-            const gift = {
-              id: simpleFaker.string.uuid(),
-              name: faker.commerce.productName(),
-              description: faker.commerce.productDescription(),
-              price: faker.commerce.price(),
-              is_default: false,
-              image_url: faker.image.url(),
-              category_id: category.id,
-              event_id: event.data.id,
-            };
-
-            const validatedGift = GiftSchema.safeParse(gift);
-            if (validatedGift.success) {
-              gifts.push(validatedGift.data);
-            }
-          }
-
-          const wishlist = WishListSchema.safeParse({
-            id: simpleFaker.string.uuid(),
-            description: faker.word.words({ count: { min: 5, max: 10 } }),
-            event_id: event.data.id,
-            total_gifts: "0",
-            total_price: "0",
-          });
-
-          if (wishlist.success) {
-            wishlists.push(wishlist.data);
-          }
         }
       }
+    }
+
+    // Generate and insert newly created gifts
+    for (const _ of Array.from({ length: 80 })) {
+      const category = faker.helpers.arrayElement(categories);
+      const gift = {
+        id: simpleFaker.string.uuid(),
+        name: faker.commerce.productName(),
+        description: faker.commerce.productDescription(),
+        price: faker.commerce.price(),
+        is_default: false,
+        image_url: faker.image.url(),
+        category_id: category.id,
+        event_id: event.data.id,
+      };
+
+      const validatedGift = GiftSchema.safeParse(gift);
+      if (validatedGift.success) {
+        gifts.push(validatedGift.data);
+      }
+    }
+
+    const wishlist = WishListSchema.safeParse({
+      id: simpleFaker.string.uuid(),
+      description: faker.word.words({ count: { min: 5, max: 10 } }),
+      event_id: event.data.id,
+      total_gifts: "0",
+      total_price: "0",
+    });
+
+    if (wishlist.success) {
+      wishlists.push(wishlist.data);
     }
   }
 
   return { categories, gifts, users, events, wishlists, giftlists };
 };
-
-const { categories, gifts, users, events, wishlists, giftlists } =
-  generateSeedData();

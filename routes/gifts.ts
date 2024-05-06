@@ -14,7 +14,7 @@ giftsRoute.get("/", zValidator("query", GiftsQueryParamsSchema), async (c) => {
   const { is_default, itemsPerPage, name, page, giftlist_id, category_id } =
     c.req.valid("query");
 
-  const query = supabase.from("gifts").select();
+  const query = supabase.from("event_gifts").select();
 
   if (itemsPerPage !== undefined && page !== undefined) {
     query.range((page - 1) * itemsPerPage, page * itemsPerPage - 1);
@@ -29,11 +29,11 @@ giftsRoute.get("/", zValidator("query", GiftsQueryParamsSchema), async (c) => {
   }
 
   if (category_id) {
-    query.eq("category_id", `%${category_id}%`);
+    query.eq("category_id", category_id); // Removed the percentage signs as they are not required for an exact match
   }
 
   if (giftlist_id) {
-    query.eq("giftlist_id", `%${giftlist_id}%`);
+    query.eq("giftlist_id", giftlist_id); // Same here, removed the percentage signs
   }
 
   const { data, error } = await query;
