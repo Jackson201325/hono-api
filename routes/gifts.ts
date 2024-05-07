@@ -10,53 +10,62 @@ import {
 const giftsRoute = new Hono();
 
 // Fetch gifts with optional query parameters
-giftsRoute.get("/", zValidator("query", GiftsQueryParamsSchema), async (c) => {
-  const {
-    is_default,
-    itemsPerPage,
-    name,
-    page,
-    giftlist_id,
-    category_id,
-    event_id,
-  } = c.req.valid("query");
+giftsRoute.get(
+  "/",
+  zValidator("query", GiftsQueryParamsSchema, (result, c) => {
+    if (!result.success) {
+      c.status(400);
+      return c.json(result.error.flatten().fieldErrors);
+    }
+  }),
+  async (c) => {
+    const {
+      is_default,
+      itemsPerPage,
+      name,
+      page,
+      giftlist_id,
+      category_id,
+      event_id,
+    } = c.req.valid("query");
 
-  const query = supabase.from("event_gifts").select();
+    const query = supabase.from("event_gifts").select();
 
-  if (itemsPerPage !== undefined && page !== undefined) {
-    query.range((page - 1) * itemsPerPage, page * itemsPerPage - 1);
-  }
+    if (itemsPerPage !== undefined && page !== undefined) {
+      query.range((page - 1) * itemsPerPage, page * itemsPerPage - 1);
+    }
 
-  if (is_default !== undefined) {
-    query.eq("is_default", is_default);
-  }
+    if (is_default !== undefined) {
+      query.eq("is_default", is_default);
+    }
 
-  if (name) {
-    query.ilike("name", `%${name}%`);
-  }
+    if (name) {
+      query.ilike("name", `%${name}%`);
+    }
 
-  if (category_id) {
-    query.eq("category_id", category_id);
-  }
+    if (category_id) {
+      query.eq("category_id", category_id);
+    }
 
-  if (giftlist_id) {
-    query.eq("giftlist_id", giftlist_id);
-  }
+    if (giftlist_id) {
+      query.eq("giftlist_id", giftlist_id);
+    }
 
-  if (event_id) {
-    query.eq("event_id", event_id);
-  }
+    if (event_id) {
+      query.eq("event_id", event_id);
+    }
 
-  const { data, error } = await query;
+    const { data, error } = await query;
 
-  if (error) {
-    c.status(500);
-    return c.json({ error: "Failed to fetch gifts" });
-  }
+    if (error) {
+      c.status(500);
+      return c.json({ error: "Failed to fetch gifts" });
+    }
 
-  c.status(200);
-  return c.json(data);
-});
+    c.status(200);
+    return c.json(data);
+  },
+);
 
 // Get a single gift by ID
 giftsRoute.get(

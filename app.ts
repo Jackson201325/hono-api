@@ -15,6 +15,4 @@ app.route("/events", eventsRoute);
 app.route("/categories", categoriesRoute);
 app.route("/", seedRoute);
 
-// showRoutes(app);
-
 export default app;
