@@ -150,10 +150,15 @@ export const GiftslistQueryParamsSchema = PaginationQueryParamsSchema.extend({
   name: z.string().min(1).max(255).optional(),
 });
 
-export const EventQueryParamsSchema = z.object({
-  primary_user_id: z.boolean().default(true).optional(),
-  secondary_user_id: z.boolean().default(true).optional(),
-});
+export const EventQueryParamsSchema = z
+  .object({
+    primary_user_id: z.boolean().default(true).optional(),
+    secondary_user_id: z.boolean().default(true).optional(),
+  })
+  .refine((data) => data.primary_user_id || data.secondary_user_id, {
+    message:
+      "At least one user must be specified (either primary_user_id or secondary_user_id)",
+  });
 
 export const WishlistQueryParamsSchema = z.object({
   event_id: z.string().uuid().optional(),

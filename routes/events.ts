@@ -1,7 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import supabase from "../db/client";
-import { EventPathParamsSchema, EventPostSchema } from "../schemas";
+import {
+  EventPathParamsSchema,
+  EventPostSchema,
+  EventQueryParamsSchema,
+} from "../schemas";
 
 const eventsRoute = new Hono();
 
@@ -17,6 +21,39 @@ eventsRoute.post("/", zValidator("json", EventPostSchema), async (c) => {
   c.status(201);
   return c.json(data);
 });
+
+eventsRoute.get(
+  "/",
+  zValidator("query", EventQueryParamsSchema, (result, c) => {
+    if (!result.success) {
+      c.status(400);
+      return c.json(result.error.flatten().fieldErrors);
+    }
+  }),
+  async (c) => {
+    const { primary_user_id, secondary_user_id } = c.req.valid("query");
+
+    const query = supabase.from("event_gifts").select();
+
+    if (primary_user_id) {
+      query.eq("primary_user_id", primary_user_id);
+    }
+
+    if (secondary_user_id) {
+      query.eq("secondary_user_id", secondary_user_id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      c.status(500);
+      return c.json({ error: "Failed to fetch gifts" });
+    }
+
+    c.status(200);
+    return c.json(data);
+  },
+);
 
 // Get a single event by ID
 eventsRoute.get(
