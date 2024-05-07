@@ -16,7 +16,7 @@ const seedRoute = new Hono();
 
 seedRoute.get("/seed", async (c) => {
   const { categories, gifts, users, events, wishlists, giftlists } =
-    generateSeedData();
+    await generateSeedData();
 
   // Insert users into the database
   const insertUsers = await supabase.from("users").insert(users).select();
@@ -56,13 +56,22 @@ seedRoute.get("/seed", async (c) => {
 
 export default seedRoute;
 
-const generateSeedData = () => {
+const generateSeedData = async () => {
   const categories: z.infer<typeof CategorySchema>[] = [];
   const gifts: z.infer<typeof GiftSchema>[] = [];
   const users: z.infer<typeof UserSchema>[] = [];
   const events: z.infer<typeof EventSchema>[] = [];
   const wishlists: z.infer<typeof WishListSchema>[] = [];
   const giftlists: z.infer<typeof GiftlistSchema>[] = [];
+
+  // Existing categories retrieval
+  const { data: existingCategories } = await supabase
+    .from("categories")
+    .select("name, id");
+
+  const existingCategoryData = existingCategories
+    ? existingCategories.map((cat) => ({ name: cat.name, id: cat.id }))
+    : [];
 
   // Generate users, events, wishlists, and giftlists
   for (const _ of Array.from({ length: 2 })) {
@@ -107,8 +116,19 @@ const generateSeedData = () => {
       });
 
       if (validatedCategory.success) {
-        categories.push(validatedCategory.data);
+        // Check if the category already exists
+        let category = existingCategoryData.find(
+          (cat) => cat.name === validatedCategory.data.name,
+        );
 
+        // If category doesn't exist, add it to the categories array and update existingCategoryData
+        if (!category) {
+          categories.push(validatedCategory.data);
+          existingCategoryData.push(validatedCategory.data);
+          category = validatedCategory.data; // Use newly created category
+        }
+
+        // Now category is either found or newly created, and you can use it to create gift lists
         for (const _ of Array.from({ length: 5 })) {
           const validatedGiftlist = GiftlistSchema.safeParse({
             id: simpleFaker.string.uuid(),
@@ -116,13 +136,14 @@ const generateSeedData = () => {
             description: faker.commerce.productDescription(),
             total_price: "0",
             is_default: faker.datatype.boolean(),
-            category_id: validatedCategory.data.id,
+            category_id: category.id,
             event_id: event.data.id,
           });
 
           if (validatedGiftlist.success) {
             giftlists.push(validatedGiftlist.data);
 
+            // Generate gifts for the giftlist
             for (const _ of Array.from({ length: 15 })) {
               const gift = {
                 id: simpleFaker.string.uuid(),
@@ -131,8 +152,8 @@ const generateSeedData = () => {
                 price: faker.commerce.price(),
                 is_default: true,
                 image_url: faker.image.url(),
-                category_id: validatedCategory.data.id,
-                event_id: event.data.id, // Add event_id for each gift
+                category_id: category.id,
+                event_id: event.data.id,
                 giftlist_id: validatedGiftlist.data.id,
               };
 
@@ -147,8 +168,8 @@ const generateSeedData = () => {
       }
     }
 
-    // Generate and insert newly created gifts
-    for (const _ of Array.from({ length: 80 })) {
+    for (const _ of Array.from({ length: 180 })) {
+      const predefinedGift = faker.helpers.arrayElement(gifts);
       const category = faker.helpers.arrayElement(categories);
       const gift = {
         id: simpleFaker.string.uuid(),
@@ -159,6 +180,7 @@ const generateSeedData = () => {
         image_url: faker.image.url(),
         category_id: category.id,
         event_id: event.data.id,
+        source_gift_id: predefinedGift.id,
       };
 
       const validatedGift = GiftSchema.safeParse(gift);

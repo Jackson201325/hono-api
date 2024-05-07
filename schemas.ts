@@ -135,10 +135,10 @@ export const PaginationQueryParamsSchema = z.object({
   page: z.number().int().positive().default(1).optional(),
 });
 
+// Cretea a nother which is get the wishlist gifts where it is not optional the wishlist
 export const GiftsQueryParamsSchema = PaginationQueryParamsSchema.extend({
   is_default: z.boolean().default(true).optional(),
   giftlist_id: z.string().optional(),
-  wishlist_id: z.string().uuid(),
   event_id: z.string().uuid(),
   category_id: z.string().optional(),
   name: z.string().min(1).max(255).optional(),
@@ -158,6 +158,13 @@ export const EventQueryParamsSchema = z.object({
 export const WishlistQueryParamsSchema = z.object({
   event_id: z.string().uuid().optional(),
 });
+
+export const WishlistGiftsQueryParamsSchema =
+  PaginationQueryParamsSchema.extend({
+    wishlist_id: z.string().uuid(),
+    event_id: z.string().uuid(),
+    name: z.string().min(1).max(255).optional(),
+  });
 
 // Path Params Schemas
 export const GiftsPathParamsSchema = z.object({

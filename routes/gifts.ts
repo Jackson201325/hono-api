@@ -11,8 +11,15 @@ const giftsRoute = new Hono();
 
 // Fetch gifts with optional query parameters
 giftsRoute.get("/", zValidator("query", GiftsQueryParamsSchema), async (c) => {
-  const { is_default, itemsPerPage, name, page, giftlist_id, category_id } =
-    c.req.valid("query");
+  const {
+    is_default,
+    itemsPerPage,
+    name,
+    page,
+    giftlist_id,
+    category_id,
+    event_id,
+  } = c.req.valid("query");
 
   const query = supabase.from("event_gifts").select();
 
@@ -29,11 +36,15 @@ giftsRoute.get("/", zValidator("query", GiftsQueryParamsSchema), async (c) => {
   }
 
   if (category_id) {
-    query.eq("category_id", category_id); // Removed the percentage signs as they are not required for an exact match
+    query.eq("category_id", category_id);
   }
 
   if (giftlist_id) {
-    query.eq("giftlist_id", giftlist_id); // Same here, removed the percentage signs
+    query.eq("giftlist_id", giftlist_id);
+  }
+
+  if (event_id) {
+    query.eq("event_id", event_id);
   }
 
   const { data, error } = await query;

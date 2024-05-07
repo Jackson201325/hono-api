@@ -2,12 +2,50 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import supabase from "../db/client";
 import {
+  WishlistGiftsQueryParamsSchema,
   WishlistPathParamsSchema,
   WishlistPostSchema,
   WishlistQueryParamsSchema,
 } from "../schemas";
 
 const wishlistsRoute = new Hono();
+
+wishlistsRoute.get(
+  "/gifts",
+  zValidator("query", WishlistGiftsQueryParamsSchema),
+  async (c) => {
+    const { itemsPerPage, name, page, wishlist_id, event_id } =
+      c.req.valid("query");
+
+    const query = supabase.from("event_gifts").select();
+
+    if (itemsPerPage !== undefined && page !== undefined) {
+      query.range((page - 1) * itemsPerPage, page * itemsPerPage - 1);
+    }
+
+    if (name) {
+      query.ilike("name", `%${name}%`);
+    }
+
+    if (event_id) {
+      query.eq("event_id", event_id);
+    }
+
+    if (wishlist_id) {
+      query.eq("wishlist_id", wishlist_id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      c.status(500);
+      return c.json({ error: "Failed to fetch gifts" });
+    }
+
+    c.status(200);
+    return c.json(data);
+  },
+);
 
 // Add gifts to a wishlist by passing an array of gift IDs
 wishlistsRoute.post(
