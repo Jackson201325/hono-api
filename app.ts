@@ -1,10 +1,9 @@
 import { Hono } from "hono";
-import { showRoutes } from "hono/dev";
+import categoriesRoute from "./routes/categories";
 import giftslistsRoute from "./routes/giftlists";
 import giftsRoute from "./routes/gifts";
 import seedRoute from "./routes/seed";
-import wishlistsRoute from "./routes/wishlist";
-import categoriesRoute from "./routes/categories";
+import wishlistsRoute from "./routes/wishlists";
 
 const app = new Hono().basePath("/api");
 
