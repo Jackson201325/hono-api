@@ -3,10 +3,10 @@ import { Hono } from "hono";
 import supabase from "../db/client";
 import { EventPathParamsSchema, EventPostSchema } from "../schemas";
 
-const eventsRoutes = new Hono();
+const eventsRoute = new Hono();
 
 // Create an event
-eventsRoutes.post("/", zValidator("json", EventPostSchema), async (c) => {
+eventsRoute.post("/", zValidator("json", EventPostSchema), async (c) => {
   const event = c.req.valid("json");
 
   const { data, error } = await supabase.from("events").insert(event);
@@ -19,7 +19,7 @@ eventsRoutes.post("/", zValidator("json", EventPostSchema), async (c) => {
 });
 
 // Get a single event by ID
-eventsRoutes.get(
+eventsRoute.get(
   "/:id",
   zValidator("param", EventPathParamsSchema),
   async (c) => {
@@ -43,7 +43,7 @@ eventsRoutes.get(
 );
 
 // Update an event by ID
-eventsRoutes.put(
+eventsRoute.put(
   "/:id",
   zValidator("param", EventPathParamsSchema),
   zValidator("json", EventPostSchema),
@@ -64,7 +64,7 @@ eventsRoutes.put(
 );
 
 // Delete an event by ID
-eventsRoutes.delete(
+eventsRoute.delete(
   "/:id",
   zValidator("param", EventPathParamsSchema),
   async (c) => {
@@ -80,4 +80,4 @@ eventsRoutes.delete(
   },
 );
 
-export default eventsRoutes;
+export default eventsRoute;
