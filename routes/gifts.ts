@@ -1,24 +1,24 @@
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import supabase from "../db/client";
+import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
+import supabase from '../db/client'
 import {
   GiftPostSchema,
   GiftsPathParamsSchema,
   GiftsQueryParamsSchema,
-} from "../schemas";
+} from '../schemas'
 
-const giftsRoute = new Hono();
+const giftsRoute = new Hono()
 
 // Fetch gifts with optional query parameters
 giftsRoute.get(
-  "/",
-  zValidator("query", GiftsQueryParamsSchema, (result, c) => {
+  '/',
+  zValidator('query', GiftsQueryParamsSchema, (result, c) => {
     if (!result.success) {
-      c.status(400);
-      return c.json(result.error.flatten().fieldErrors);
+      c.status(400)
+      return c.json(result.error.flatten().fieldErrors)
     }
   }),
-  async (c) => {
+  async c => {
     const {
       is_default,
       itemsPerPage,
@@ -27,125 +27,121 @@ giftsRoute.get(
       giftlist_id,
       category_id,
       event_id,
-    } = c.req.valid("query");
+    } = c.req.valid('query')
 
-    const query = supabase.from("event_gifts").select();
+    const query = supabase.from('event_gifts').select()
 
     if (itemsPerPage !== undefined && page !== undefined) {
-      query.range((page - 1) * itemsPerPage, page * itemsPerPage - 1);
+      query.range((page - 1) * itemsPerPage, page * itemsPerPage - 1)
     }
 
     if (is_default !== undefined) {
-      query.eq("is_default", is_default);
+      query.eq('is_default', is_default)
     }
 
     if (name) {
-      query.ilike("name", `%${name}%`);
+      query.ilike('name', `%${name}%`)
     }
 
     if (category_id) {
-      query.eq("category_id", category_id);
+      query.eq('category_id', category_id)
     }
 
     if (giftlist_id) {
-      query.eq("giftlist_id", giftlist_id);
+      query.eq('giftlist_id', giftlist_id)
     }
 
     if (event_id) {
-      query.eq("event_id", event_id);
+      query.eq('event_id', event_id)
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query
 
     if (error) {
-      c.status(500);
-      return c.json({ error: "Failed to fetch gifts" });
+      c.status(500)
+      return c.json({ error: 'Failed to fetch gifts' })
     }
 
-    c.status(200);
-    return c.json(data);
+    c.status(200)
+    return c.json(data)
   },
-);
+)
 
 // Get a single gift by ID
-giftsRoute.get(
-  "/:id",
-  zValidator("param", GiftsPathParamsSchema),
-  async (c) => {
-    const { id } = c.req.valid("param");
+giftsRoute.get('/:id', zValidator('param', GiftsPathParamsSchema), async c => {
+  const { id } = c.req.valid('param')
 
-    const { data, error } = await supabase
-      .from("gifts")
-      .select()
-      .eq("id", id)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from('gifts')
+    .select()
+    .eq('id', id)
+    .maybeSingle()
 
-    if (error || !data) {
-      c.status(404);
-      return c.json({ error: "Gift not found" });
-    }
-
-    c.status(200);
-    return c.json(data);
-  },
-);
-
-// Create a new gift
-giftsRoute.post("/", zValidator("json", GiftPostSchema), async (c) => {
-  const gift = c.req.valid("json");
-
-  const { data, error } = await supabase.from("gifts").insert(gift);
-
-  if (error) {
-    c.status(500);
-    return c.json({ error: "Failed to create gift" });
+  if (error || !data) {
+    c.status(404)
+    return c.json({ error: 'Gift not found' })
   }
 
-  c.status(201);
-  return c.json(data);
-});
+  c.status(200)
+  return c.json(data)
+})
+
+// Create a new gift
+giftsRoute.post('/', zValidator('json', GiftPostSchema), async c => {
+  const gift = c.req.valid('json')
+
+  const { data, error } = await supabase.from('gifts').insert(gift)
+
+  if (error) {
+    c.status(500)
+    return c.json({ error: 'Failed to create gift' })
+  }
+
+  c.status(201)
+  return c.json(data)
+})
 
 // Update a gift by ID
 giftsRoute.put(
-  "/:id",
-  zValidator("param", GiftsPathParamsSchema),
-  zValidator("json", GiftPostSchema),
-  async (c) => {
-    const { id } = c.req.valid("param");
-    const giftUpdates = c.req.valid("json");
+  '/:id',
+  zValidator('param', GiftsPathParamsSchema),
+  zValidator('json', GiftPostSchema),
+  async c => {
+    const { id } = c.req.valid('param')
+    const giftUpdates = c.req.valid('json')
 
     const { data, error } = await supabase
-      .from("gifts")
+      .from('gifts')
       .update(giftUpdates)
-      .eq("id", id);
+      .eq('id', id)
 
     if (error) {
-      c.status(500);
-      return c.json({ error: "Failed to update gift" });
+      c.status(500)
+      return c.json({ error: 'Failed to update gift' })
     }
 
-    c.status(200);
-    return c.json(data);
+    c.status(200)
+    return c.json(data)
   },
-);
+)
 
 // Delete a gift by ID
 giftsRoute.delete(
-  "/:id",
-  zValidator("param", GiftsPathParamsSchema),
-  async (c) => {
-    const { id } = c.req.valid("param");
+  '/:id',
+  zValidator('param', GiftsPathParamsSchema),
+  async c => {
+    const { id } = c.req.valid('param')
 
-    const { error } = await supabase.from("gifts").delete().eq("id", id);
+    const { error } = await supabase.from('gifts').delete().eq('id', id)
 
     if (error) {
-      c.status(500);
-      return c.json({ error: "Failed to delete gift" });
+      c.status(500)
+      return c.json({ error: 'Failed to delete gift' })
     }
 
-    c.status(204);
-    return c.json({ message: "Gift deleted successfully" });
+    c.status(204)
+    return c.json({ message: 'Gift deleted successfully' })
   },
-);
+)
 
-export default giftsRoute;
+export default giftsRoute
